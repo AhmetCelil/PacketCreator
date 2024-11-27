@@ -318,7 +318,7 @@ public class SpringBootPackageCreator extends JFrame {
     private String generatePlaceholderClassContent(String packageName, String className) {
         return "package " + packageName + ";\n\n"
                 + "public class " + className + " {\n\n"
-                + "    //Kod, espiri gibidir. Açıklamak zorundaysanız kötüdür.\n\n"
+                + "    //\nBazen Pazartesi günü tüm gün yatmak, haftanın kalanını Pazartesi yazılan kodu debug etmeye harcamaktan iyidir.\n\n"
                 + "}";
     }
 
