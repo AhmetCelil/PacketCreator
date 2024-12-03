@@ -21,6 +21,7 @@ public class SpringBootPackageCreator extends JFrame {
     private static final String PATHS_FILE = "paths.json";
     private JComboBox<String> pathComboBox;
 
+
     public SpringBootPackageCreator() {
         setTitle("Spring Boot Paket Oluşturucu by ACY");
         setSize(900, 600);
@@ -49,11 +50,11 @@ public class SpringBootPackageCreator extends JFrame {
         });
 
         browseButton = new JButton("Dosya Seç");
-        browseButton.setBackground(new Color(0, 255, 224, 255));
+        browseButton.setBackground(new Color(0, 246, 216, 255));
         browseButton.addActionListener(e -> openFileChooser());
 
         deletePathButton = new JButton("Seçili Path'i Sil");
-        deletePathButton.setBackground(new Color(237, 37, 37, 255));
+        deletePathButton.setBackground(new Color(159, 24, 24, 255));
         deletePathButton.addActionListener(e -> deleteSelectedPath());
 
         JPanel pathPanel = new JPanel();
@@ -94,6 +95,9 @@ public class SpringBootPackageCreator extends JFrame {
         mainPackagePanel.add(utilCheckBox);
         mainPackagePanel.setBorder(BorderFactory.createTitledBorder("Ana Paketler"));
         mainPanel.add(mainPackagePanel);
+
+
+
 
         JPanel serviceSubPanel = new JPanel(new GridLayout(1, 2, 10, 10));
         businessCheckBox = new JCheckBox("Business");
@@ -231,7 +235,8 @@ public class SpringBootPackageCreator extends JFrame {
 
         // Create main packages and their placeholder classes
         if (dtoCheckBox.isSelected()) {
-            createPlaceholderClass(baseDir, "dto", basePackageName, "Dto");
+            createPlaceholderClass(baseDir, "dto", basePackageName, "RequestDto");
+            createPlaceholderClass(baseDir, "dto", basePackageName, "ResponseDto");
         }
         if (entityCheckBox.isSelected()) {
             createPlaceholderClass(baseDir, "entity", basePackageName, "Entity");
@@ -257,8 +262,9 @@ public class SpringBootPackageCreator extends JFrame {
             File serviceDir = createPlaceholderClass(baseDir, "service", basePackageName, "Service");
 
             if (businessCheckBox.isSelected()) {
-                createPlaceholderClass(serviceDir, "business", basePackageName, "Business");
+                File businessDir = createPlaceholderClass(serviceDir, "business", basePackageName, "BusinessImpl");
             }
+
             if (webclientCheckBox.isSelected()) {
                 File webclientDir = createPlaceholderClass(serviceDir, "webclient", basePackageName, "WebClient");
 
@@ -269,27 +275,32 @@ public class SpringBootPackageCreator extends JFrame {
                     createPlaceholderClass(webclientDir, "impl", basePackageName, "Impl");
                 }
             }
+
         }
     }
 
+
     private File createPlaceholderClass(File parentDir, String packageName, String basePackageName, String classType) {
-        File packageDir = new File(parentDir, packageName);
+        File packageDir = packageName.isEmpty() ? parentDir : new File(parentDir, packageName);
+
         if (!packageDir.exists()) {
             packageDir.mkdirs();
         }
 
-        String className = capitalizeFirstLetter(basePackageName) + classType;
+        String className = switch (classType) {
+            case "Helper" -> capitalizeFirstLetter(basePackageName) + "WebClientHelper";
+            case "Impl" -> capitalizeFirstLetter(basePackageName) + "WebClientImpl";
+            default -> capitalizeFirstLetter(basePackageName) + classType;
+        };
+
+        // Create the class file
         File classFile = new File(packageDir, className + ".java");
 
         try {
             if (!classFile.exists()) {
                 classFile.createNewFile();
-
-                // **Tam Paket Adını Hesapla:**
                 String fullPackageName = getFullPackageName(packageDir);
-
-                // **Dosya İçeriğini Oluştur ve Yaz:**
-                String classContent = generatePlaceholderClassContent(fullPackageName, className, classType);
+                String classContent = generatePlaceholderClassContent(fullPackageName, className, classType, basePackageName);
                 Files.writeString(classFile.toPath(), classContent);
             }
         } catch (Exception ex) {
@@ -298,6 +309,7 @@ public class SpringBootPackageCreator extends JFrame {
 
         return packageDir;
     }
+
 
     private String getFullPackageName(File packageDir) {
         // Proje kökünden itibaren src/main/java kısmını atla ve dosya yolunu paket ismine çevir.
@@ -313,99 +325,130 @@ public class SpringBootPackageCreator extends JFrame {
         return input.substring(0, 1).toUpperCase() + input.substring(1);
     }
 
-    private String generatePlaceholderClassContent(String packageName, String className, String classType) {
+    private String generatePlaceholderClassContent(String packageName, String className, String classType, String basePackageName) {
         StringBuilder classContent = new StringBuilder();
-
-        // Paket adını ekle
         classContent.append("package ").append(packageName).append(";\n\n");
 
-        // İlgili anotasyonları ve importları ekle
         switch (classType) {
             case "Controller":
                 classContent.append("import lombok.RequiredArgsConstructor;\n")
                         .append("import org.springframework.web.bind.annotation.RequestMapping;\n")
                         .append("import org.springframework.web.bind.annotation.RestController;\n")
                         .append("import org.springframework.http.ResponseEntity;\n")
-                        .append("import org.springframework.web.bind.annotation.GetMapping;\n\n");
-                classContent.append("@RestController\n")
+                        .append("import org.springframework.web.bind.annotation.GetMapping;\n\n")
+                        .append("@RestController\n")
                         .append("@RequestMapping(\"/api/").append(className.toLowerCase()).append("\")\n")
                         .append("@RequiredArgsConstructor\n");
                 break;
 
-            case "Service":
-            case "Business":
-                classContent.append("import lombok.RequiredArgsConstructor;\n")
-                        .append("import org.springframework.stereotype.Service;\n")
-                        .append("import org.springframework.transaction.annotation.Transactional;\n\n");
-                classContent.append("@Service\n")
-                        .append("@Transactional\n")
-                        .append("@RequiredArgsConstructor\n");
-                break;
-
-            case "Repository":
-                // Repository ve JpaRepository import işlemi
-                classContent.append("import org.springframework.data.jpa.repository.JpaRepository;\n")
-                        .append("import org.springframework.stereotype.Repository;\n\n")
-                        .append("import ").append(packageName).append(".entity.").append(className.replace("Repository", "Entity")).append(";\n\n"); // Entity sınıfını import et
-                classContent.append("@Repository\n")
-                        .append("public interface ").append(className).append(" extends JpaRepository<")
-                        .append(className.replace("Repository", "Entity")).append(", Long> {\n\n}")
-                        .append("\n");
+            case "Helper":
+                classContent.append("import lombok.extern.slf4j.Slf4j;\n\n")
+                        .append("@Slf4j\n")
+                        .append("public class ").append(className).append(" {\n\n")
+                        .append("    // WebClient görevinde kullanılacak Helper metodları alanı \n")
+                        .append("}\n");
                 return classContent.toString();
 
+            case "Impl":
+                String requestDtoClass = capitalizeFirstLetter(basePackageName) + "RequestDto";
+                String responseDtoClass = capitalizeFirstLetter(basePackageName) + "ResponseDto";
+
+                classContent.append("import lombok.RequiredArgsConstructor;\n")
+                        .append("import lombok.extern.slf4j.Slf4j;\n")
+                        .append("import org.springframework.stereotype.Service;\n\n")
+                        .append("@Slf4j\n")
+                        .append("@RequiredArgsConstructor\n")
+                        .append("@Service\n")
+                        .append("public class ").append(className).append(" implements PostWebClient<")
+                        .append(requestDtoClass).append(", ")
+                        .append(responseDtoClass).append("> {\n\n")
+                        .append("    @Override\n")
+                        .append("    public void someWebClientMethod() {\n")
+                        .append("        // WebClient \n")
+                        .append("    }\n")
+                        .append("}\n");
+                return classContent.toString();
+
+            case "Service":
+                classContent.append("public interface ").append(className).append(" {\n\n")
+                        .append("    void someBusinessMethod();\n\n")
+                        .append("}");
+                return classContent.toString();
+
+            case "Repository":
+                classContent.append("import org.springframework.data.jpa.repository.JpaRepository;\n")
+                        .append("import org.springframework.stereotype.Repository;\n\n")
+                        .append("import ").append(packageName).append(".entity.").append(className.replace("Repository", "Entity")).append(";\n\n")
+                        .append("@Repository\n")
+                        .append("public interface ").append(className).append("Repository extends JpaRepository<")
+                        .append(className.replace("Repository", "Entity")).append(", Long> {\n\n")
+                        .append("}");
+                return classContent.toString();
+
+            case "RequestDto":
+                classContent.append("import lombok.Getter;\n")
+                        .append("import lombok.Setter;\n\n")
+                        .append("@Getter\n")
+                        .append("@Setter\n")
+                        .append("public class ").append(className).append(" {\n\n")
+                        .append("    // Request DTO alanı\n")
+                        .append("}\n");
+                return classContent.toString();
+
+            case "ResponseDto":
+                classContent.append("import lombok.Getter;\n")
+                        .append("import lombok.Setter;\n\n")
+                        .append("@Getter\n")
+                        .append("@Setter\n")
+                        .append("public class ").append(className).append(" {\n\n")
+                        .append("    //  response DTO alanı\n")
+                        .append("}\n");
+                return classContent.toString();
+
+            case "Entity":
+                classContent.append("import jakarta.persistence.Entity;\n")
+                        .append("import lombok.Getter;\n")
+                        .append("import lombok.Setter;\n\n")
+                        .append("@Entity\n")
+                        .append("@Getter\n")
+                        .append("@Setter\n")
+                        .append("public class ").append(className).append(" {\n\n")
+                        .append("    // Entity alanı\n")
+                        .append("}");
+                return classContent.toString();
 
             case "Config":
                 classContent.append("import org.springframework.context.annotation.Bean;\n")
-                        .append("import org.springframework.context.annotation.Configuration;\n\n");
-                classContent.append("@Configuration\n");
-                break;
-
-            case "Entity":
-                classContent.append("import jakarta.persistence.Entity;\n\n")
-                        .append("import lombok.Getter;\n")
-                        .append("import lombok.Setter;\n\n");
-                classContent.append("@Entity\n")
-                        .append("@Getter\n")
-                        .append("@Setter\n");
-                break;
-
-            case "DTO":
-                classContent.append("import lombok.Data;\n\n");
-                classContent.append("@Data\n");
-                break;
-
-            case "Helper":
-                classContent.append("import lombok.extern.slf4j.Slf4j;\n\n");
-                classContent.append("@Slf4j\n");
-                break;
-
-            case "Impl":
-                classContent.append("import lombok.RequiredArgsConstructor;\n")
-                        .append("import lombok.extern.slf4j.Slf4j;\n")
-                        .append("import org.springframework.stereotype.Service;\n\n");
-                classContent.append("@Slf4j\n")
-                        .append("@RequiredArgsConstructor\n")
-                        .append("@Service\n");
-                break;
+                        .append("import org.springframework.context.annotation.Configuration;\n\n")
+                        .append("@Configuration\n")
+                        .append("public class ").append(className).append(" {\n\n")
+                        .append("    // Config\n")
+                        .append("}");
+                return classContent.toString();
 
             case "Exception":
                 classContent.append("import org.springframework.http.HttpStatus;\n")
-                        .append("import org.springframework.web.bind.annotation.ResponseStatus;\n\n");
-                classContent.append("@ResponseStatus(HttpStatus.BAD_REQUEST)\n");
-                break;
+                        .append("import org.springframework.web.bind.annotation.ResponseStatus;\n\n")
+                        .append("@ResponseStatus(HttpStatus.BAD_REQUEST)\n")
+                        .append("public class ").append(className).append(" extends RuntimeException {\n\n")
+                        .append("    // Exception alanı\n")
+                        .append("}");
+                return classContent.toString();
 
             case "Util":
-                classContent.append("import java.util.Objects;\n\n");
-                break;
+                classContent.append("import java.util.Objects;\n\n")
+                        .append("public class ").append(className).append(" {\n\n")
+                        .append("    // Utility metodları\n")
+                        .append("}");
+                return classContent.toString();
 
             default:
                 break;
         }
 
-        // Sınıf tanımını oluştur
-        classContent.append("public class ").append(className).append(" {\n\n");
-        classContent.append("    // Başarılar arkadaşlar\n\n");
-        classContent.append("}");
+        classContent.append("public class ").append(className).append(" {\n\n")
+                .append("    // Başarılar arkadaşlar\n\n")
+                .append("}");
 
         return classContent.toString();
     }
