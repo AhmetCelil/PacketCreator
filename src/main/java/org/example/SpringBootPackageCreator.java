@@ -287,20 +287,22 @@ public class SpringBootPackageCreator extends JFrame {
             packageDir.mkdirs();
         }
 
+        // Paket adını baş harfleri büyük hale getir
+        String capitalizedBaseName = capitalizeWords(basePackageName);
+
         String className = switch (classType) {
-            case "Helper" -> capitalizeFirstLetter(basePackageName) + "WebClientHelper";
-            case "Impl" -> capitalizeFirstLetter(basePackageName) + "WebClientImpl";
-            default -> capitalizeFirstLetter(basePackageName) + classType;
+            case "Helper" -> capitalizedBaseName + "WebClientHelper";
+            case "Impl" -> capitalizedBaseName + "WebClientImpl";
+            default -> capitalizedBaseName + classType;
         };
 
-        // Create the class file
         File classFile = new File(packageDir, className + ".java");
 
         try {
             if (!classFile.exists()) {
                 classFile.createNewFile();
                 String fullPackageName = getFullPackageName(packageDir);
-                String classContent = generatePlaceholderClassContent(fullPackageName, className, classType, basePackageName);
+                String classContent = generatePlaceholderClassContent(fullPackageName, className, classType, capitalizedBaseName);
                 Files.writeString(classFile.toPath(), classContent);
             }
         } catch (Exception ex) {
@@ -323,6 +325,17 @@ public class SpringBootPackageCreator extends JFrame {
 
     private String capitalizeFirstLetter(String input) {
         return input.substring(0, 1).toUpperCase() + input.substring(1);
+    }
+
+    // Her kelimenin ilk harfini büyüten ve birleştiren metot
+    private String capitalizeWords(String input) {
+        String[] words = input.split("_");
+        StringBuilder capitalized = new StringBuilder();
+        for (String word : words) {
+            capitalized.append(Character.toUpperCase(word.charAt(0)))
+                    .append(word.substring(1).toLowerCase());
+        }
+        return capitalized.toString();
     }
 
     private String generatePlaceholderClassContent(String packageName, String className, String classType, String basePackageName) {
