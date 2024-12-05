@@ -133,6 +133,10 @@ public class SpringBootPackageCreator extends JFrame {
                 JOptionPane.showMessageDialog(null, "Paket adı ve proje dosya konumunu girin.", "Hata", JOptionPane.ERROR_MESSAGE);
                 return;
             }
+
+            String sanitizedPackageName = sanitizePackageName(packageName); // Paket adı temizleme
+            String className = formatClassName(sanitizedPackageName);
+
             try {
                 createSpringBootPackageStructure(packageName, projectPath);
                 JOptionPane.showMessageDialog(null, "Paket yapısı başarıyla oluşturuldu!", "Başarılı", JOptionPane.INFORMATION_MESSAGE);
@@ -144,6 +148,21 @@ public class SpringBootPackageCreator extends JFrame {
         serviceCheckBox.addActionListener(e -> toggleServiceOptions(serviceCheckBox.isSelected()));
         webclientCheckBox.addActionListener(e -> toggleWebClientOptions(webclientCheckBox.isSelected()));
     }
+    private String sanitizePackageName(String packageName) {
+        return packageName.replace("_", "").toLowerCase();
+    }
+
+    private String formatClassName(String packageName) {
+        String[] words = packageName.split("_");
+        StringBuilder className = new StringBuilder();
+        for (String word : words) {
+            className.append(Character.toUpperCase(word.charAt(0)))
+                    .append(word.substring(1).toLowerCase());
+        }
+        return className.toString();
+    }
+
+
 
     private void openFileChooser() {
         JFileChooser fileChooser = new JFileChooser();
@@ -226,7 +245,7 @@ public class SpringBootPackageCreator extends JFrame {
 
 
     private void createSpringBootPackageStructure(String basePackageName, String projectPath) {
-        File baseDir = new File(projectPath, basePackageName.replace('.', '/'));
+        File baseDir = new File(projectPath, sanitizePackageName(basePackageName).replace('.', '/'));
 
         // Create base package directory
         if (!baseDir.exists()) {
@@ -301,7 +320,7 @@ public class SpringBootPackageCreator extends JFrame {
         try {
             if (!classFile.exists()) {
                 classFile.createNewFile();
-                String fullPackageName = getFullPackageName(packageDir);
+                String fullPackageName = sanitizePackageName(getFullPackageName(packageDir));
                 String classContent = generatePlaceholderClassContent(fullPackageName, className, classType, capitalizedBaseName);
                 Files.writeString(classFile.toPath(), classContent);
             }
