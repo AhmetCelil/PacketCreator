@@ -73,7 +73,7 @@ public class SpringBootPackageCreator extends JFrame {
         setVisible(true);
 
         packageNameField = new JTextField();
-        packageNameField.setBorder(BorderFactory.createTitledBorder("Paket adı: Örnek 'araciliksozlesme'"));
+        packageNameField.setBorder(BorderFactory.createTitledBorder("Paket adı: Örnek 'dilekcelerim'            Not:Bir kelimdeden fazla kullanılacaksa aralarına '_' işareti konulmalı. Örnek: is_birakma_bildirimi"));
         mainPanel.add(packageNameField);
 
         JPanel mainPackagePanel = new JPanel(new GridLayout(2, 8, 5, 5));
@@ -400,6 +400,9 @@ public class SpringBootPackageCreator extends JFrame {
                         .append("    }\n")
                         .append("}\n");
                 return classContent.toString();
+
+
+
 
             case "Service":
                 classContent.append("public interface ").append(className).append(" {\n\n")
