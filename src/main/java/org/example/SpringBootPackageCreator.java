@@ -15,7 +15,7 @@ import java.util.List;
 
 public class SpringBootPackageCreator extends JFrame {
     private JTextField packageNameField, projectPathField;
-    private JCheckBox dtoCheckBox, entityCheckBox, controllerCheckBox, repositoryCheckBox, serviceCheckBox, configCheckBox, exceptionCheckBox, utilCheckBox;
+    private JCheckBox dtoCheckBox, entityCheckBox, controllerCheckBox, repositoryCheckBox, serviceCheckBox, configCheckBox, exceptionCheckBox, utilCheckBox, enumCheckBox;
     private JCheckBox businessCheckBox, webclientCheckBox, helperCheckBox, implCheckBox;
     private JButton createButton, browseButton, deletePathButton;
     private static final String PATHS_FILE = "paths.json";
@@ -24,14 +24,15 @@ public class SpringBootPackageCreator extends JFrame {
 
     public SpringBootPackageCreator() {
         setTitle("Spring Boot Paket Oluşturucu by ACY");
-        setSize(900, 600);
+        setSize(900, 640);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
         setResizable(true);
 
         try {
             UIManager.setLookAndFeel("javax.swing.plaf.nimbus.NimbusLookAndFeel");
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
 
         JPanel mainPanel = new JPanel(new GridLayout(6, 2, 10, 10));
         mainPanel.setBackground(new Color(130, 137, 149, 255));
@@ -73,7 +74,7 @@ public class SpringBootPackageCreator extends JFrame {
         setVisible(true);
 
         packageNameField = new JTextField();
-        packageNameField.setBorder(BorderFactory.createTitledBorder("Paket adı: Örnek 'dilekcelerim'            Not:Bir kelimdeden fazla kullanılacaksa aralarına '_' işareti konulmalı. Örnek: is_birakma_bildirimi"));
+        packageNameField.setBorder(BorderFactory.createTitledBorder("Paket adı: Örnek 'dilekcelerim'            Not:Paket adı bir kelimdeden fazla olacaksa aralarına '_' işareti konulmalı. Örnek: is_birakma_bildirimi"));
         mainPanel.add(packageNameField);
 
         JPanel mainPackagePanel = new JPanel(new GridLayout(2, 8, 5, 5));
@@ -85,6 +86,7 @@ public class SpringBootPackageCreator extends JFrame {
         configCheckBox = new JCheckBox("Config");
         exceptionCheckBox = new JCheckBox("Exception");
         utilCheckBox = new JCheckBox("Util");
+        enumCheckBox = new JCheckBox("Enum");
         mainPackagePanel.add(dtoCheckBox);
         mainPackagePanel.add(entityCheckBox);
         mainPackagePanel.add(controllerCheckBox);
@@ -94,9 +96,8 @@ public class SpringBootPackageCreator extends JFrame {
         mainPackagePanel.add(exceptionCheckBox);
         mainPackagePanel.add(utilCheckBox);
         mainPackagePanel.setBorder(BorderFactory.createTitledBorder("Ana Paketler"));
+        mainPackagePanel.add(enumCheckBox);
         mainPanel.add(mainPackagePanel);
-
-
 
 
         JPanel serviceSubPanel = new JPanel(new GridLayout(1, 2, 10, 10));
@@ -148,6 +149,7 @@ public class SpringBootPackageCreator extends JFrame {
         serviceCheckBox.addActionListener(e -> toggleServiceOptions(serviceCheckBox.isSelected()));
         webclientCheckBox.addActionListener(e -> toggleWebClientOptions(webclientCheckBox.isSelected()));
     }
+
     private String sanitizePackageName(String packageName) {
         return packageName.replace("_", "").toLowerCase();
     }
@@ -161,7 +163,6 @@ public class SpringBootPackageCreator extends JFrame {
         }
         return className.toString();
     }
-
 
 
     private void openFileChooser() {
@@ -217,7 +218,8 @@ public class SpringBootPackageCreator extends JFrame {
         try {
             if (Files.exists(Paths.get(PATHS_FILE))) {
                 String json = Files.readString(Paths.get(PATHS_FILE));
-                return new Gson().fromJson(json, new TypeToken<List<String>>() {}.getType());
+                return new Gson().fromJson(json, new TypeToken<List<String>>() {
+                }.getType());
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -275,6 +277,11 @@ public class SpringBootPackageCreator extends JFrame {
         if (utilCheckBox.isSelected()) {
             createPlaceholderClass(baseDir, "util", basePackageName, "Util");
         }
+        if(enumCheckBox.isSelected()) {
+            createPlaceholderClass(baseDir, "enums", basePackageName, "Enum");
+        }
+
+
 
         // Service-specific logic
         if (serviceCheckBox.isSelected()) {
@@ -369,7 +376,7 @@ public class SpringBootPackageCreator extends JFrame {
                         .append("import org.springframework.http.ResponseEntity;\n")
                         .append("import org.springframework.web.bind.annotation.GetMapping;\n\n")
                         .append("@RestController\n")
-                        .append("@RequestMapping(\"/api/").append(className.toLowerCase()).append("\")\n")
+                        .append("@RequestMapping(\"/").append(className.toLowerCase()).append("\")\n")
                         .append("@RequiredArgsConstructor\n");
                 break;
 
@@ -401,14 +408,41 @@ public class SpringBootPackageCreator extends JFrame {
                         .append("}\n");
                 return classContent.toString();
 
-
-
-
             case "Service":
-                classContent.append("public interface ").append(className).append(" {\n\n")
-                        .append("    void someBusinessMethod();\n\n")
+                if (packageName.contains(".business")) {
+                    classContent.append("import org.springframework.stereotype.Service;\n\n")
+                            .append("@Service\n");
+                }
+                if (!packageName.contains(".business")) {
+                    // Service için interface tanımı
+                    classContent.append("public interface ").append(className).append(" {\n\n")
+                            .append("    void metodlar();\n\n")
+                            .append("}");
+                    return classContent.toString();
+                }
+
+            case "Enum":
+                classContent.append("import lombok.AllArgsConstructor;\n" ).append("import lombok.Getter;\n\n")
+                        .append("@Getter\n@AllArgsConstructor\n").
+                        append("public enum ").append(className).append(" {\n\n")
                         .append("}");
                 return classContent.toString();
+
+
+            case "BusinessImpl":
+                classContent.append("import org.springframework.stereotype.Service;\n")
+                        .append("import lombok.RequiredArgsConstructor;\n")
+                        .append("import lombok.extern.slf4j.Slf4j;\n\n")
+                        .append("@Slf4j\n")
+                        .append("@RequiredArgsConstructor\n")
+                        .append("@Service\n") // @Service anotasyonu burada ekleniyor
+                        .append("public class ").append(className).append(" {\n\n")
+                        .append("    public void someBusinessMetodları() {\n")
+                        .append("        // iş yaptığın yer\n")
+                        .append("    }\n\n")
+                        .append("}");
+                return classContent.toString();
+
 
             case "Repository":
                 classContent.append("import org.springframework.data.jpa.repository.JpaRepository;\n")
@@ -457,7 +491,7 @@ public class SpringBootPackageCreator extends JFrame {
                         .append("import org.springframework.context.annotation.Configuration;\n\n")
                         .append("@Configuration\n")
                         .append("public class ").append(className).append(" {\n\n")
-                        .append("    // Config\n")
+                        .append("    // Configeasyonlar burada\n")
                         .append("}");
                 return classContent.toString();
 
