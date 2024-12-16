@@ -24,7 +24,7 @@ public class SpringBootPackageCreator extends JFrame {
 
     public SpringBootPackageCreator() {
         setTitle("Spring Boot Paket Oluşturucu by ACY");
-        setSize(900, 640);
+        setSize(950, 680);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
         setResizable(true);
@@ -34,9 +34,9 @@ public class SpringBootPackageCreator extends JFrame {
         } catch (Exception ignored) {
         }
 
-        JPanel mainPanel = new JPanel(new GridLayout(6, 2, 10, 10));
-        mainPanel.setBackground(new Color(130, 137, 149, 255));
-        mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        JPanel mainPanel = new JPanel(new GridLayout(5, 1, 9, 9));
+        mainPanel.setBackground(new Color(113, 112, 112, 255));
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(12, 8, 12, 8));
 
         projectPathField = new JTextField();
         projectPathField.setBorder(BorderFactory.createTitledBorder("Proje Dosya Konumu: Örnek 'C:/Users/Proje'"));
@@ -449,7 +449,7 @@ public class SpringBootPackageCreator extends JFrame {
                         .append("import org.springframework.stereotype.Repository;\n\n")
                         .append("import ").append(packageName).append(".entity.").append(className.replace("Repository", "Entity")).append(";\n\n")
                         .append("@Repository\n")
-                        .append("public interface ").append(className).append("Repository extends JpaRepository<")
+                        .append("public interface ").append(className).append(" extends JpaRepository<")
                         .append(className.replace("Repository", "Entity")).append(", Long> {\n\n")
                         .append("}");
                 return classContent.toString();
@@ -523,10 +523,23 @@ public class SpringBootPackageCreator extends JFrame {
     }
 
 
+    private static void setUIFont(Font font) {
+        java.util.Enumeration<Object> keys = UIManager.getDefaults().keys();
+        while (keys.hasMoreElements()) {
+            Object key = keys.nextElement();
+            Object value = UIManager.get(key);
+            if (value instanceof Font) {
+                UIManager.put(key, font);
+            }
+        }
+    }
+
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
+            setUIFont(new Font("New Times Romance", Font.PLAIN, 14)); // Font büyüklüğünü ayarlayın
             SpringBootPackageCreator app = new SpringBootPackageCreator();
             app.setVisible(true);
         });
     }
+
 }
