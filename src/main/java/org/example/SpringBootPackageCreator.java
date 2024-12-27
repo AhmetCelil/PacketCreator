@@ -18,7 +18,7 @@
         private JTextField packageNameField, projectPathField;
         private JCheckBox dtoCheckBox, entityCheckBox, controllerCheckBox, repositoryCheckBox, configCheckBox, exceptionCheckBox, utilCheckBox, enumCheckBox, serviceCheckBox;
         private JCheckBox businessCheckBox, webclientCheckBox, helperCheckBox, implCheckBox;
-        private JButton createButton, browseButton, deletePathButton;
+        private JButton createButton, browseButton, deletePathButton, templatesButton;
         private static final String PATHS_FILE = "paths.json";
         private JComboBox<String> pathComboBox;
 
@@ -29,6 +29,9 @@
             setDefaultCloseOperation(EXIT_ON_CLOSE);
             setLayout(new BorderLayout());
             setResizable(true);
+
+
+
 
             try {
                 UIManager.setLookAndFeel("javax.swing.plaf.nimbus.NimbusLookAndFeel");
@@ -51,13 +54,20 @@
                 }
             });
 
+
             browseButton = new JButton("Dosya Seç");
             browseButton.setBackground(new Color(0, 246, 216, 255));
             browseButton.addActionListener(e -> openFileChooser());
 
+            // Create the "Templateler" button
+            templatesButton = new JButton("Templateler");
+            templatesButton.setBackground(new Color(0, 246, 216, 255));
+            templatesButton.addActionListener(e -> openTemplatesFolder());
+
             deletePathButton = new JButton("Seçili Path'i Sil");
             deletePathButton.setBackground(new Color(159, 24, 24, 255));
             deletePathButton.addActionListener(e -> deleteSelectedPath());
+
 
             JPanel pathPanel = new JPanel();
             pathPanel.setLayout(new BoxLayout(pathPanel, BoxLayout.X_AXIS));
@@ -125,7 +135,8 @@
             createButton.setFocusPainted(false);
             buttonPanel.add(createButton);
             add(buttonPanel, BorderLayout.SOUTH);
-
+            buttonPanel.add(templatesButton);
+            add(buttonPanel, BorderLayout.SOUTH);
             add(mainPanel, BorderLayout.CENTER);
 
             createButton.addActionListener(e -> {
@@ -149,6 +160,24 @@
             serviceCheckBox.addActionListener(e -> toggleServiceOptions(serviceCheckBox.isSelected()));
             webclientCheckBox.addActionListener(e -> toggleWebClientOptions(webclientCheckBox.isSelected()));
         }
+        private void openTemplatesFolder() {
+            // Define the path to the template folder
+            String templateFolderPath = "src/main/resources/templates/";
+
+            // Open the folder in the default file explorer
+            File templateFolder = new File(templateFolderPath);
+            if (templateFolder.exists() && templateFolder.isDirectory()) {
+                // Open file explorer on the template folder
+                try {
+                    Desktop.getDesktop().open(templateFolder);
+                } catch (IOException e) {
+                    JOptionPane.showMessageDialog(this, "Template klasörü açılamadı.", "Hata", JOptionPane.ERROR_MESSAGE);
+                }
+            } else {
+                JOptionPane.showMessageDialog(this, "Template klasörü bulunamadı: " + templateFolderPath, "Hata", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+
 
         private String sanitizePackageName(String packageName) {
             return packageName.replace("_", "").toLowerCase();
