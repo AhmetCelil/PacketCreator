@@ -1,0 +1,8 @@
+package {{packageName}};
+
+import org.springframework.stereotype.Service;
+
+@Service
+public class {{className}} {
+    // İş metotları burada
+}

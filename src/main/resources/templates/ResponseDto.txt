@@ -1,0 +1,11 @@
+package {{packageName}};
+
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
+public class {{className}} {
+
+    // Response DTO alanı
+}
