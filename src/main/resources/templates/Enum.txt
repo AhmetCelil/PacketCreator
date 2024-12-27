@@ -1,0 +1,10 @@
+package {{packageName}};
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+
+@Getter
+@AllArgsConstructor
+public enum {{className}} {
+    // Enum değerleri burada
+}

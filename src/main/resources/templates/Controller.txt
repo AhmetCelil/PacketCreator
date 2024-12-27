@@ -1,0 +1,12 @@
+package {{packageName}};
+
+import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/{{classNameLowercase}}")
+@RequiredArgsConstructor
+public class {{className}} {
+
+    // Default Controller metodu
+}

@@ -305,14 +305,16 @@
             }
         }
 
-
         private File createPlaceholderClass(File parentDir, String packageName, String basePackageName, String classType) {
-            File packageDir = packageName.isEmpty() ? parentDir : new File(parentDir, packageName);
+            // Create subpackage structure (e.g., webclient/impl)
+            File packageDir = packageName.isEmpty() ? parentDir : new File(parentDir, packageName.replace('.', File.separatorChar));
 
+            // Ensure the directory is created
             if (!packageDir.exists()) {
                 packageDir.mkdirs();
             }
 
+            // Class name generation based on classType
             String capitalizedBaseName = capitalizeWords(basePackageName);
             String className = switch (classType) {
                 case "Helper" -> capitalizedBaseName + "WebClientHelper";
@@ -321,13 +323,13 @@
                 default -> capitalizedBaseName + classType;
             };
 
+            // Ensure the correct file path and class file
             File classFile = new File(packageDir, className + ".java");
-
             try {
                 if (!classFile.exists()) {
                     classFile.createNewFile();
 
-                    // Şablon dosyasını kullanarak içerik oluştur
+                    // Generate class content based on template
                     String fullPackageName = sanitizePackageName(getFullPackageName(packageDir));
                     String templateType = classType.equals("Service") ? "ServiceInterface" : classType;
                     String classContent = generatePlaceholderClassContent(templateType, fullPackageName, className, capitalizedBaseName);
@@ -340,7 +342,6 @@
 
             return packageDir;
         }
-
 
         private String getFullPackageName(File packageDir) {
             // Proje kökünden itibaren src/main/java kısmını atla ve dosya yolunu paket ismine çevir.
@@ -368,27 +369,24 @@
         }
         private String loadTemplateContent(String templateName) {
             try {
-                // resources/templates dizininden şablon dosyasını okuyun
+                // template dizinindeki dosyayı okuyun
                 String templatePath = "src/main/resources/templates/" + templateName + ".txt";
                 Path path = Paths.get(templatePath);
-                return Files.readString(path);
+                return Files.readString(path); // Dosyayı okuma işlemi
             } catch (IOException e) {
                 e.printStackTrace();
-                return null;
+                return null; // Hata durumunda null döner
             }
         }
-
-
         private String generatePlaceholderClassContent(
                 String templateName,
                 String packageName,
                 String className,
                 String basePackageName
         ) {
-            // Load template content
+            // Load template content for "WebClientImpl"
             String templateFile = switch (templateName) {
-                case "Service" -> "ServiceInterface";
-                case "Impl" -> "ServiceImpl";
+                case "WebClientImpl" -> "WebClientImpl"; // Ensure this is the correct template file name
                 default -> templateName;
             };
 
@@ -410,7 +408,6 @@
                     .replace("{{requestDtoClass}}", requestDtoClass)
                     .replace("{{responseDtoClass}}", responseDtoClass);
         }
-
 
 
         private static void setUIFont(Font font) {
