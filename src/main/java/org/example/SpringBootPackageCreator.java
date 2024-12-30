@@ -335,34 +335,28 @@
         }
 
         private File createPlaceholderClass(File parentDir, String packageName, String basePackageName, String classType) {
-            // Create subpackage structure (e.g., webclient/impl)
             File packageDir = packageName.isEmpty() ? parentDir : new File(parentDir, packageName.replace('.', File.separatorChar));
 
-            // Ensure the directory is created
             if (!packageDir.exists()) {
                 packageDir.mkdirs();
             }
 
-            // Class name generation based on classType
             String capitalizedBaseName = capitalizeWords(basePackageName);
             String className = switch (classType) {
                 case "Helper" -> capitalizedBaseName + "WebClientHelper";
                 case "Impl" -> capitalizedBaseName + "WebClientImpl";
                 case "Service" -> capitalizedBaseName + "Service";
+                case "RequestDto" -> capitalizedBaseName + "RequestDTO";
+                case "ResponseDto" -> capitalizedBaseName + "ResponseDTO";
                 default -> capitalizedBaseName + classType;
             };
 
-            // Ensure the correct file path and class file
             File classFile = new File(packageDir, className + ".java");
             try {
                 if (!classFile.exists()) {
                     classFile.createNewFile();
-
-                    // Generate class content based on template
                     String fullPackageName = sanitizePackageName(getFullPackageName(packageDir));
-                    String templateType = classType.equals("Service") ? "ServiceInterface" : classType;
-                    String classContent = generatePlaceholderClassContent(templateType, fullPackageName, className, capitalizedBaseName);
-
+                    String classContent = generatePlaceholderClassContent(classType, fullPackageName, className, capitalizedBaseName);
                     Files.writeString(classFile.toPath(), classContent);
                 }
             } catch (Exception ex) {
@@ -371,6 +365,7 @@
 
             return packageDir;
         }
+
 
         private String getFullPackageName(File packageDir) {
             // Proje kökünden itibaren src/main/java kısmını atla ve dosya yolunu paket ismine çevir.
